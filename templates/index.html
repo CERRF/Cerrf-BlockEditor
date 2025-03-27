@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CERRF Block Editor Prototype</title>
+    <!-- Load Blockly from CDN -->
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <style>
+        /* Basic styling for the Blockly workspace and output */
+        #blocklyDiv {
+            height: 480px;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f1f1f1;
+            border: 1px solid #ddd;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background: #4A90E2;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background: #357ABD;
+        }
+    </style>
+</head>
+<body>
+    <h1>CERRF Block Editor Prototype</h1>
+    <div id="blocklyDiv"></div>
+    <button class="button" onclick="runCode()">Run Code</button>
+    <h3>Terminal Output:</h3>
+    <div id="output"></div>
+
+    <!-- Define a simple Blockly toolbox with a few Python blocks -->
+    <xml id="toolbox" style="display: none">
+      <category name="Logic" colour="210">
+        <block type="controls_if"></block>
+      </category>
+      <category name="Loops" colour="120">
+        <block type="controls_repeat_ext">
+          <value name="TIMES">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+        </block>
+      </category>
+      <category name="Math" colour="230">
+        <block type="math_number">
+          <field name="NUM">123</field>
+        </block>
+        <block type="math_arithmetic"></block>
+      </category>
+      <category name="Text" colour="160">
+        <block type="text"></block>
+        <block type="text_print"></block>
+      </category>
+    </xml>
+
+    <script>
+        // Inject Blockly workspace into the div with our toolbox
+        var workspace = Blockly.inject('blocklyDiv', {
+            toolbox: document.getElementById('toolbox'),
+            scrollbars: true,
+            trashcan: true
+        });
+
+        // Function to run the code generated from blocks
+        function runCode() {
+            // Generate Python code using Blockly's built-in Python generator.
+            // Note: Make sure the Python generator is loaded.
+            Blockly.Python.INFINITE_LOOP_TRAP = null;
+            var code = Blockly.Python.workspaceToCode(workspace);
+            console.log("Generated code:\n", code);
+            // Send the code to the Flask server for execution.
+            fetch('/execute', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({code: code})
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('output').textContent = data.output;
+            })
+            .catch(error => {
+                document.getElementById('output').textContent = "Error: " + error;
+            });
+        }
+    </script>
+    <!-- Load the Blockly Python generator -->
+    <script src="https://unpkg.com/blockly/python_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+</body>
+</html>
